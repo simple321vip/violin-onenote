@@ -4,7 +4,7 @@ server:
     context-path: /onenote
 spring:
   profiles:
-    active: prod
+    default: prod
   jpa:
     defer-datasource-initialization: true
     hibernate:

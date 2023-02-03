@@ -78,6 +78,24 @@ spec:
 ) {
   node(label) {
 
+    def violin_parent_repo = checkout([
+      $class: 'GitSCM',
+      branches: [[name: "*/master"]],
+      doGenerateSubmoduleConfigurations: false,
+      extensions:  [[$class: 'CloneOption', noTags: false, reference: '', shallow: true, timeout: 1000]]+[[$class: 'CheckoutOption', timeout: 1000]],
+      submoduleCfg: [],
+      userRemoteConfigs: [[
+        credentialsId: '2448e943-479f-4796-b5a0-fd3bf22a5d30',
+        url: 'https://gitee.com/guan-xiangwei/violin-parent.git'
+        ]]
+      ])
+
+    stage('violin-parent install') {
+      container('maven') {
+        sh 'mvn clean install'
+      }
+    }
+
     def violin_common_repo = checkout([
       $class: 'GitSCM',
       branches: [[name: "*/master"]],
@@ -108,27 +126,31 @@ spec:
         ]]
       ])
 
-    def imageTag = "v1.02"
+    def imageTag
+    def localDateTime
+    stage('obtain release tag') {
+      imageTag = sh returnStdout: true ,script: "git tag --sort=-taggerdate | head -n 1"
+      imageTag = imageTag.trim()
+      localDateTime = sh returnStdout: true, script: "echo `date +%s`"
+      localDateTime = localDateTime.trim()
+    }
+
+    stage('compile') {
+      container('maven') {
+        sh 'mvn clean package'
+      }
+    }
+
     def registryUrl = "ccr.ccs.tencentyun.com"
     def imageEndpoint = "violin/violin-onenote"
     def image = "${registryUrl}/${imageEndpoint}:${imageTag}"
 
-    stage('单元测试') {
-      echo "测试阶段"
-    }
-    stage('代码编译打包') {
-      container('maven') {
-        echo "代码编译打包阶段"
-        sh 'mvn clean package'
-      }
-    }
-    stage('镜像构建') {
+    stage('build image') {
       withCredentials([[$class: 'UsernamePasswordMultiBinding',
         credentialsId: '8eb5126b-6a2f-4644-add0-bc2a669e663d',
         usernameVariable: 'DOCKER_USER',
         passwordVariable: 'DOCKER_PASSWORD']]) {
           container('docker') {
-            echo "3. 构建 Docker 镜像阶段"
             sh """
               docker login ${registryUrl} --username=${DOCKER_USER} -p ${DOCKER_PASSWORD}
               docker build -t ${image} .
@@ -136,6 +158,30 @@ spec:
               """
           }
         }
+    }
+
+    stage('update k8s deployment') {
+      script{
+        wrap([$class: 'BuildUser']) {
+          withCredentials([usernamePassword(
+              credentialsId: '2448e943-479f-4796-b5a0-fd3bf22a5d30',
+              usernameVariable: 'GIT_USERNAME',
+              passwordVariable: 'GIT_PASSWORD'
+          )]) {
+            sh """
+                git config --global user.email "${env.BUILD_USER_EMAIL}"
+                git config --global user.name "${env.BUILD_USER_ID}"
+                git config --local credential.helper "!p() { echo username=\$GIT_USERNAME; echo password=\$GIT_PASSWORD;}; p"
+
+            """
+            sh "sed -i -e s/tagUpdateTime:.*/tagUpdateTime:' 'T${localDateTime}/g ./prod/violin-onenote-deployment-prod.yaml"
+            sh "sed -i -e s/violin-onenote:.*/violin-onenote:${imageTag}/g ./prod/violin-onenote-deployment-prod.yaml"
+            sh "git add ./prod/violin-onenote-deployment-prod.yaml"
+            sh "git commit -m 'update tag ${imageTag}'"
+            sh "git push -u origin HEAD:master"
+          }
+        }
+      }
     }
   }
 }
