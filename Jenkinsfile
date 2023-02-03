@@ -160,6 +160,18 @@ spec:
         }
     }
 
+    def violin_cicd_repo = checkout([
+      $class: 'GitSCM',
+      branches: [[name: "*/master"]],
+      doGenerateSubmoduleConfigurations: false,
+      extensions:  [[$class: 'CloneOption', noTags: false, reference: '', shallow: true, timeout: 1000]]+[[$class: 'CheckoutOption', timeout: 1000]],
+      submoduleCfg: [],
+      userRemoteConfigs: [[
+        credentialsId: '2448e943-479f-4796-b5a0-fd3bf22a5d30',
+        url: 'https://gitee.com/guan-xiangwei/violin-cicd.git'
+        ]]
+      ])
+
     stage('update k8s deployment') {
       script{
         wrap([$class: 'BuildUser']) {
