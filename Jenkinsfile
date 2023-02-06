@@ -129,7 +129,7 @@ spec:
     def imageTag
     def localDateTime
     stage('obtain release tag') {
-      imageTag = sh returnStdout: true ,script: "git tag --sort=-taggerdate | head -n 1"
+      imageTag = sh returnStdout: true ,script: "git tag --sort=-creatordate | head -n 1"
       imageTag = imageTag.trim()
       localDateTime = sh returnStdout: true, script: "echo `date +%s`"
       localDateTime = localDateTime.trim()
