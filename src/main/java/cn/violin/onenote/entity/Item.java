@@ -11,19 +11,20 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "page")
-public class Page {
+public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "page_id")
-    private long pageId;
+    @Column(name = "item_id")
+    private long itemId;
 
-    @Column(name = "section_id")
-    private long sectionId;
+    @Column(name = "item_name")
+    private String itemName;
 
-    @Column(name = "page_name")
-    private String pageName;
+    @Column(name = "item_value")
+    private String itemValue;
 
-    @Column(name = "page_path")
-    private String pagePath;
+    @Column(name = "category_id")
+    private long categoryId;
+
 }

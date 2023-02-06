@@ -1,11 +1,11 @@
-CREATE TABLE IF NOT EXISTS section(
+CREATE TABLE IF NOT EXISTS category(
      section_id INT NOT NULL AUTO_INCREMENT,
      user_id LONG NOT NULL,
      section_name CHAR(20) DEFAULT '未分类' NOT NULL,
      PRIMARY KEY (section_id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS page(
+CREATE TABLE IF NOT EXISTS item(
      page_id INT NOT NULL AUTO_INCREMENT,
      section_id LONG NOT NULL,
      page_name CHAR(20) DEFAULT '未分类' NOT NULL,
