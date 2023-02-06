@@ -23,13 +23,14 @@ public class CategoryService {
     }
 
     @Transactional
-    public void insertCategory(CategoryVo categoryVo, Tenant tenant) {
+    public Category insertCategory(CategoryVo categoryVo, Tenant tenant) {
         Category category = new Category();
         category.setCategoryColor(categoryVo.getCategoryColor());
         category.setCategoryIcon(categoryVo.getCategoryIcon());
         category.setCategoryTheme(categoryVo.getCategoryTheme());
         category.setTenantId(tenant.getTenantId());
         categoryRepo.save(category);
+        return category;
     }
 
     @Transactional

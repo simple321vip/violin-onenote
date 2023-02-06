@@ -39,9 +39,10 @@ public class CategoryController {
     }
 
     @PutMapping("/category")
-    public ResponseEntity<Void> putCategory(@Valid @RequestBody CategoryVo categoryVo, @CurrentUser Tenant tenant) {
-        categoryService.insertCategory(categoryVo, tenant);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<CategoryVo> putCategory(@Valid @RequestBody CategoryVo categoryVo, @CurrentUser Tenant tenant) {
+        Category category = categoryService.insertCategory(categoryVo, tenant);
+        CategoryVo vo = CategoryVo.builder().categoryId(category.getCategoryId()).build();
+        return new ResponseEntity<>(vo, HttpStatus.OK);
     }
 
 }
